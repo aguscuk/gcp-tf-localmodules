@@ -14,12 +14,20 @@
  * limitations under the License.
  */
 
+
+provider "google" {
+  project                 = var.project
+  region                  = var.region
+  credentials             = var.google_credentials
+}
+
+
 /******************************************
 	VPC configuration
  *****************************************/
 module "vpc" {
-  source                                 = "./modules/vpc"
-  network_name                           = var.network_name
+  source                                 = "../modules/vpc"
+  network_name                           = "${var.env}-${var.network_name}"
   auto_create_subnetworks                = var.auto_create_subnetworks
   routing_mode                           = var.routing_mode
   project_id                             = var.project_id
@@ -33,7 +41,7 @@ module "vpc" {
 	Subnet configuration
  *****************************************/
 module "subnets" {
-  source           = "./modules/subnets"
+  source           = "../modules/subnets"
   project_id       = var.project_id
   network_name     = module.vpc.network_name
   subnets          = var.subnets
@@ -44,7 +52,7 @@ module "subnets" {
 	Routes
  *****************************************/
 module "routes" {
-  source            = "./modules/routes"
+  source            = "../modules/routes"
   project_id        = var.project_id
   network_name      = module.vpc.network_name
   routes            = var.routes
@@ -74,7 +82,7 @@ locals {
 }
 
 module "firewall_rules" {
-  source       = "./modules/firewall-rules"
+  source       = "../modules/firewall-rules"
   project_id   = var.project_id
   network_name = module.vpc.network_name
   rules        = local.rules

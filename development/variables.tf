@@ -13,6 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+variable "google_credentials" {
+    description = "google service account credential"
+}
+variable "region" {
+    description = "nama region jakarta"
+}
+variable "project" {
+    description = "nama project"
+}
+variable "env" {
+    description = "environment"
+}
 
 variable "project_id" {
   description = "The ID of the project where this VPC will be created"
