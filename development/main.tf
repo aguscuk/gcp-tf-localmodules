@@ -62,28 +62,55 @@ module "routes" {
 /******************************************
 	Firewall rules
  *****************************************/
-locals {
-  rules = [
-    for f in var.firewall_rules : {
-      name                    = f.name
-      direction               = f.direction
-      priority                = lookup(f, "priority", null)
-      description             = lookup(f, "description", null)
-      ranges                  = lookup(f, "ranges", null)
-      source_tags             = lookup(f, "source_tags", null)
-      source_service_accounts = lookup(f, "source_service_accounts", null)
-      target_tags             = lookup(f, "target_tags", null)
-      target_service_accounts = lookup(f, "target_service_accounts", null)
-      allow                   = lookup(f, "allow", [])
-      deny                    = lookup(f, "deny", [])
-      log_config              = lookup(f, "log_config", null)
-    }
-  ]
-}
+# locals {
+#   rules = [
+#     for f in var.firewall_rules : {
+#       name                    = f.name
+#       direction               = f.direction
+#       priority                = lookup(f, "priority", null)
+#       description             = lookup(f, "description", null)
+#       ranges                  = lookup(f, "ranges", null)
+#       source_tags             = lookup(f, "source_tags", null)
+#       source_service_accounts = lookup(f, "source_service_accounts", null)
+#       target_tags             = lookup(f, "target_tags", null)
+#       target_service_accounts = lookup(f, "target_service_accounts", null)
+#       allow                   = lookup(f, "allow", [])
+#       deny                    = lookup(f, "deny", [])
+#       log_config              = lookup(f, "log_config", null)
+#     }
+#   ]
+# }
 
-module "firewall_rules" {
-  source       = "../modules/firewall-rules"
-  project_id   = var.project_id
-  network_name = module.vpc.network_name
-  rules        = local.rules
+# module "firewall_rules" {
+#   source       = "../modules/firewall-rules"
+#   project_id   = var.project_id
+#   network_name = module.vpc.network_name
+#   rules        = local.rules
+# }
+
+module "net-firewall" {
+  source                  = "../modules/fabric-net-firewall"
+  project_id              = var.project_id
+  network                 = module.vpc.network_name
+  internal_ranges_enabled = true
+  internal_ranges         = ["10.0.0.0/8"]
+  internal_target_tags    = ["internal"]
+  custom_rules = {
+    ingress-database = {
+      description          = "database mysql ingress rule, tag-based."
+      direction            = "INGRESS"
+      action               = "allow"
+      ranges               = ["192.168.0.0"]
+      sources              = ["mysql"]
+      targets              = ["mysql", "postgresql"]
+      use_service_accounts = false
+      rules = [
+        {
+          protocol = "tcp"
+          ports    = ["3306","5432"]
+        }
+      ]
+      extra_attributes = {}
+    }
+  }
 }
